@@ -69,6 +69,8 @@ Using the IP address returned by the above (referred to below as `REMOTE_IP_ADDR
     ```
     export AWS_PROFILE=awsprofile
     aws sso login --profile ${AWS_PROFILE}
+    # Optional (if no VPN)
+    aws ssm start-session --target $(aws ec2 describe-instances --profile AWSPROFILE --filters "Name=tag:Name,Values=PROJECTPREFIX-devsrvr-000-sdowd" | jq -r '.Reservations[] | .Instances[] | .InstanceId') --document-name AWS-StartPortForwardingSession --parameters '{"portNumber": ["22"], "localPortNumber": ["2222"]}'
     ```
 
 1. Control-click the link (or copy/paste) into a browser, authenticate and authorize the connection.
@@ -77,6 +79,8 @@ Using the IP address returned by the above (referred to below as `REMOTE_IP_ADDR
 
     ```
     aws ec2 start-instances --profile AWSPROFILE --instance-ids $(aws ec2 describe-instances --profile AWSPROFILE --filters "Name=tag:Name,Values=PROJECTPREFIX-devsrvr-000-${USER}" "Name=instance-state-name,Values=stopped" | jq -r '.Reservations[] | .Instances[] | .InstanceId')
+    # Optional (if no VPN)
+    aws ssm start-session --target $(aws ec2 describe-instances --profile AWSPROFILE --filters "Name=tag:Name,Values=PROJECTPREFIX-devsrvr-000-sdowd" | jq -r '.Reservations[] | .Instances[] | .InstanceId') --document-name AWS-StartPortForwardingSession --parameters '{"portNumber": ["22"], "localPortNumber": ["2222"]}'
     ```
 
     Note: if this command fails, try replacing `"${USER}"` with `flast` (as in `jsmith`).

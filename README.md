@@ -5,7 +5,9 @@
 
 ## Overview
 
-This module creates a set of EC2 instances which each mount a user directory from a shared EFS volume.  Users are created from a user name and an SSH public key.  The instances are intended for use in a hybrid local/cloud development environment, moving the IDE (IntelliJ IDEA or Visual Studio Code) and docker container runtime to the remote instance so that the local machine is not overloaded.  The connection between local and remote is done via SSH.
+This module creates a set of EC2 instances which each mount a user directory from a shared EFS volume.  Users are created from a list of user names and SSH public keys defined in the `user_list` variable; one instance is created for each user name.  The instances are intended for use in a hybrid local/cloud development environment, moving the IDE (IntelliJ IDEA or Visual Studio Code) and docker container runtime to the remote instance so that the local machine is not overloaded.  The connection between local and remote is done via SSH (required by IntelliJ and VSCode).  Instances do not receive a public IP address and connections are restricted to the CIDR blocks defined by the `ingress_cidr_blocks` list in the `security_groups` variable.  Connection to that may require a VPN is the CIDR block is part of that VPN.  Connection can also be accomplished via AWS SSM sessions using the `AWS-StartPortForwardingSession` document.
+
+User data is stored in a shared EFS volume where each user's data is mounted in their instance under `/projects` and linked to from the `ubuntu` user's home directory as `~/projects`.  This data is retained even if their instance is deleted (by remiving their entry from the `user_lsit` variable).  If a user with the same name is added later, the data will be available at the mount point (provided the entire stack has not been `terraform destroy`ed.)
 
 For details on setup, see [REMOTE-DEVELOPMENT.md](REMOTE-DEVELOPMENT.md)
 
