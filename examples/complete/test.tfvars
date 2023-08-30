@@ -4,8 +4,8 @@ region             = "us-east-1"
 environment        = "dev"
 environment_number = "000"
 
-vpc_id            = "vpc-0cdfb27d2af038fc4"
-subnet_names      = ["vpc-ns-530235-private-us-east-1b"]
+vpc_id            = "vpc-0b1e120c29021ea0f"
+subnet_names      = ["-private-us-east-1b"]
 availability_zone = "us-east-1b"
 
 # override with smaller instance type to test EFS mount.  need larger to actually run.
@@ -41,7 +41,7 @@ security_group = {
       "protocol"  = "tcp"
     },
   ]
-  ingress_cidr_blocks = ["10.242.172.0/24"]
+  ingress_cidr_blocks = ["192.168.0.1/32"]
   egress_cidr_blocks  = ["0.0.0.0/0"]
   egress_with_cidr_blocks = [
     {
