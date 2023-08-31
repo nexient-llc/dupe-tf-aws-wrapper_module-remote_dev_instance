@@ -12,18 +12,20 @@
 
 # this will always point here
 REPO_MANIFESTS_URL ?= https://github.com/nexient-llc/common-automation-framework.git
-# this eventually will point to a git tag
+# TODO: replace with git tag when supported
 REPO_BRANCH ?= main
 # this should point to a seed manifest
 REPO_MANIFEST ?= manifests/terraform_modules/seed/manifest.xml
 
 # Settings to pull in nexient version of (google) repo utility that supports environment substitution:
 REPO_URL ?= https://github.com/nexient-llc/git-repo.git
+# TODO: replace with git tag when supported
 REPO_REV ?= main
 export REPO_REV REPO_URL
 
 # Example variable to substituted after init, but before sync in repo manifests.
 GITBASE ?= https://github.com/nexient-llc/
+# TODO: replace with git tag when supported
 GITREV ?= main
 export GITBASE GITREV
 

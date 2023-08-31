@@ -23,29 +23,16 @@ variable "ami_names" {
   default     = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
 }
 
-variable "ami_virt_types" {
-  type        = list(string)
-  description = "Virtualization type to filter for the ami"
-  default     = ["hvm"]
-
-}
-
 variable "ami_owners" {
   type        = list(string)
   description = "Owner to filter for the ami"
   default     = ["099720109477"] # Canonical
 }
 
-variable "iam_instance_profile_name" {
-  type        = string
-  description = "IAM profile name to use for instances"
-  default     = ""
-}
-
-variable "vpc_id" {
-  description = "VPC ID to put this instance in"
-  type        = string
-  default     = ""
+variable "ami_virt_types" {
+  type        = list(string)
+  description = "Virtualization type to filter for the ami"
+  default     = ["hvm"]
 }
 
 variable "availability_zone" {
@@ -54,46 +41,84 @@ variable "availability_zone" {
   default     = "us-east-2a"
 }
 
-variable "subnet_names" {
-  description = "names of subnets to find for placement"
-  type        = list(string)
-  default     = []
+variable "efs_backup_policy_enabled" {
+  type        = bool
+  description = "EFS backup enabled?"
+  default     = true
 }
 
-variable "naming_prefix" {
-  description = "Prefix for the provisioned resources."
+variable "efs_lifecycle_policy" {
+  type        = map(string)
+  description = "EFS lifecycle policy (map)"
+  default = {
+    transition_to_ia                    = "AFTER_30_DAYS"
+    transition_to_primary_storage_class = "AFTER_1_ACCESS"
+  }
+}
+
+variable "efs_performance_mode" {
   type        = string
-  default     = "devsrvr"
+  description = "EFS performance mode"
+  default     = "generalPurpose"
 }
 
-variable "environment" {
-  description = "Environment in which the resource should be provisioned like dev, qa, prod etc."
+variable "efs_policy_statements" {
+  type = list(object(
+    {
+      sid     = string
+      effect  = string
+      actions = list(string)
+      principals = list(object(
+        {
+          type        = string
+          identifiers = list(string)
+        }
+      ))
+      conditions = list(object(
+        {
+          test     = string
+          variable = string
+          values   = list(bool)
+        }
+      ))
+    }
+  ))
+  description = "EFS access policy"
+  default = [
+    {
+      sid    = "RestrictToAccessPoints"
+      effect = "Allow"
+      actions = [
+        "elasticfilesystem:ClientWrite",
+        "elasticfilesystem:ClientMount"
+      ]
+      principals = [
+        {
+          type        = "AWS"
+          identifiers = ["*"]
+        }
+      ]
+      conditions = [
+        {
+          test     = "Bool"
+          variable = "elasticfilesystem:AccessedViaMountTarget"
+          values   = [true]
+        }
+      ]
+    }
+  ]
+}
+
+variable "efs_security_group_description" {
   type        = string
-  default     = "dev"
+  description = "Name for EFS security group"
+  default     = "Dev-Server EFS security group"
 }
 
-variable "environment_number" {
-  description = "The environment count for the respective environment. Defaults to 000. Increments in value of 1"
+variable "efs_throughput_mode" {
   type        = string
-  default     = "000"
-}
-
-variable "resource_number" {
-  description = "The resource count for the respective resource. Defaults to 000. Increments in value of 1"
-  type        = string
-  default     = "000"
-}
-
-variable "region" {
-  description = "AWS Region in which the infra needs to be provisioned"
-  type        = string
-  default     = "us-east-2"
-}
-
-variable "root_volume_size" {
-  description = "Size of the instance root volume in GiB"
-  type        = number
-  default     = 20
+  description = "EFS throughput mode"
+  default     = "elastic"
 }
 
 variable "efs_volume_uid" {
@@ -114,18 +139,40 @@ variable "efs_volume_basepath" {
   default     = "/developers"
 }
 
-variable "security_group" {
-  description = "Default security group to be attached"
-  type = object({
-    ingress_rules            = optional(list(string))
-    ingress_cidr_blocks      = optional(list(string))
-    ingress_with_cidr_blocks = optional(list(map(string)))
-    egress_rules             = optional(list(string))
-    egress_cidr_blocks       = optional(list(string))
-    egress_with_cidr_blocks  = optional(list(map(string)))
-  })
+variable "environment" {
+  description = "Environment in which the resource should be provisioned like dev, qa, prod etc."
+  type        = string
+  default     = "dev"
+}
 
-  default = null
+variable "environment_number" {
+  description = "The environment count for the respective environment. Defaults to 000. Increments in value of 1"
+  type        = string
+  default     = "000"
+}
+
+variable "git_server_host" {
+  type        = string
+  description = "name of the git server to put into the .netrc template"
+  default     = "github.com"
+}
+
+variable "iam_instance_profile_name" {
+  type        = string
+  description = "IAM profile name to use for instances"
+  default     = ""
+}
+
+variable "naming_prefix" {
+  description = "Prefix for the provisioned resources."
+  type        = string
+  default     = "devsrvr"
+}
+
+variable "region" {
+  description = "AWS Region in which the infra needs to be provisioned"
+  type        = string
+  default     = "us-east-2"
 }
 
 variable "resource_names_map" {
@@ -149,6 +196,50 @@ variable "resource_names_map" {
   }
 }
 
+variable "resource_number" {
+  description = "The resource count for the respective resource. Defaults to 000. Increments in value of 1"
+  type        = string
+  default     = "000"
+}
+
+variable "root_volume_size" {
+  description = "Size of the instance root volume in GiB"
+  type        = number
+  default     = 20
+}
+
+variable "security_group" {
+  description = "Default security group to be attached"
+  type = object({
+    ingress_rules            = optional(list(string))
+    ingress_cidr_blocks      = optional(list(string))
+    ingress_with_cidr_blocks = optional(list(map(string)))
+    egress_rules             = optional(list(string))
+    egress_cidr_blocks       = optional(list(string))
+    egress_with_cidr_blocks  = optional(list(map(string)))
+  })
+
+  default = null
+}
+
+variable "security_group_description" {
+  description = "name given to security group"
+  type        = string
+  default     = "Security Group for Dev Servers"
+}
+
+variable "subnet_names" {
+  description = "names of subnets to find for placement"
+  type        = list(string)
+  default     = []
+}
+
+variable "tags" {
+  description = "A map of custom tags to be attached to this resource"
+  type        = map(string)
+  default     = {}
+}
+
 variable "user_list" {
   description = "A map of user names and ssh public keys"
   type = list(object(
@@ -161,14 +252,8 @@ variable "user_list" {
   default = []
 }
 
-variable "git_server_host" {
+variable "vpc_id" {
+  description = "VPC ID to put this instance in"
   type        = string
-  description = "name of the git server to put into the .netrc template"
-  default     = "github.com"
-}
-
-variable "tags" {
-  description = "A map of custom tags to be attached to this resource"
-  type        = map(string)
-  default     = {}
+  default     = ""
 }

@@ -49,11 +49,11 @@ data "aws_iam_instance_profile" "iam_instance_profile" {
 
 module "security_group_dev_servers" {
   source  = "terraform-aws-modules/security-group/aws"
-  version = "~> 4.17.2"
+  version = "~> 4.17"
 
   vpc_id                   = var.vpc_id
   name                     = module.resource_names["ec2_sg"].standard
-  description              = "Security Group for Dev Servers"
+  description              = var.security_group_description
   ingress_cidr_blocks      = coalesce(try(lookup(var.security_group, "ingress_cidr_blocks", []), []), [])
   ingress_rules            = coalesce(try(lookup(var.security_group, "ingress_rules", []), []), [])
   ingress_with_cidr_blocks = coalesce(try(lookup(var.security_group, "ingress_with_cidr_blocks", []), []), [])
@@ -70,7 +70,7 @@ locals {
 
 module "efs" {
   source  = "terraform-aws-modules/efs/aws"
-  version = "1.2.0"
+  version = "~> 1.2"
 
   # File system
   name           = module.resource_names["efs_fs"].standard
@@ -78,44 +78,19 @@ module "efs" {
   encrypted      = true
   # kms_key_arn    = module.kms.key_arn
 
-  performance_mode = "generalPurpose"
-  throughput_mode  = "elastic"
+  performance_mode = var.efs_performance_mode
+  throughput_mode  = var.efs_throughput_mode
 
-  lifecycle_policy = {
-    transition_to_ia                    = "AFTER_30_DAYS"
-    transition_to_primary_storage_class = "AFTER_1_ACCESS"
-  }
+  lifecycle_policy = var.efs_lifecycle_policy
 
   # File system policy
   attach_policy                      = true
   bypass_policy_lockout_safety_check = false
-  policy_statements = [
-    {
-      sid    = "RestrictToAccessPoints"
-      effect = "Allow"
-      actions = [
-        "elasticfilesystem:ClientWrite",
-        "elasticfilesystem:ClientMount"
-      ]
-      principals = [
-        {
-          type        = "AWS"
-          identifiers = ["*"]
-        }
-      ]
-      conditions = [
-        {
-          test     = "Bool"
-          variable = "elasticfilesystem:AccessedViaMountTarget"
-          values   = [true]
-        }
-      ]
-    }
-  ]
+  policy_statements                  = var.efs_policy_statements
 
   # Mount targets / security group
   mount_targets              = { for k, v in zipmap([local.azs[0]], [data.aws_subnet.subnet.id]) : k => { subnet_id = v } }
-  security_group_description = "Dev-Server EFS security group"
+  security_group_description = var.efs_security_group_description
   security_group_vpc_id      = data.aws_vpc.vpc.id
   security_group_rules = {
     vpc = {
@@ -127,7 +102,7 @@ module "efs" {
   }
 
   # Backup policy
-  enable_backup_policy = true
+  enable_backup_policy = var.efs_backup_policy_enabled
 
   # Replication configuration - results in:
   # creating EFS Replication Configuration (fs-07f2...): AccessDeniedException: User is not authorized to perform that action on the specified resource
@@ -159,7 +134,7 @@ module "resource_names" {
 
 module "key_pair" {
   source  = "terraform-aws-modules/key-pair/aws"
-  version = "~> 2.0.2"
+  version = "~> 2.0"
 
   count = length(var.user_list)
 
