@@ -14,7 +14,17 @@ terraform {
   required_version = ">= 1.1.0"
 
   required_providers {
-    //aws = ">= 5.13.1"
-    aws = "~> 5.0"
+
+    # aws = "~> 5.10.0"
+    # results in:
+    # Warning: [Fixable] Legacy version constraint for provider "aws" in `required_providers` (terraform_required_providers)
+    # on versions.tf line 17:
+    # 17:     aws = "~> 5.10.0"
+    # Reference: https://github.com/terraform-linters/tflint-ruleset-terraform/blob/v0.4.0/docs/rules/terraform_required_providers.md
+
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.10.0"
+    }
   }
 }
