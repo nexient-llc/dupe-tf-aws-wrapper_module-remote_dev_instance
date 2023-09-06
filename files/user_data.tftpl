@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# send output to log file
+LOG=/tmp/dev-server-init.log
+exec &>> $LOG
+
+sudo sed -i 's/#$nrconf{restart} = '"'"'i'"'"';/$nrconf{restart} = '"'"'a'"'"';/g' /etc/needrestart/needrestart.conf
+
+sudo apt-add-repository --yes ppa:ansible/ansible
+sudo apt-update --yes
+sudo apt-upgrade --yes
+sudo apt install ansible make tree unzip git binutils stunnel4 --yes
+sudo apt install apt-transport-https ca-certificates curl software-properties-common --yes
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update --yes
+sudo apt install docker-ce --yes
+sudo usermod -aG docker ubuntu
+
+sudo apt install repo --yes
+
+git clone https://github.com/asdf-vm/asdf.git ~ubuntu/.asdf --branch v0.11.3
+cat <<EOF >> ~ubuntu/.bashrc
+. ~/.asdf/asdf.sh
+. ~/.asdf/completions/asdf.bash
+EOF
+
+cat <<EOF2 >> ~ubuntu/.netrc
+machine ${githost}
+login ${uname}
+password HTTP_ACCESS_TOKEN_HERE
+EOF2
+chmod 0600 ~ubuntu/.netrc
+
+sudo mkdir /projects
+sudo chown -R ubuntu:ubuntu ~ubuntu/.netrc ~ubuntu/.asdf /projects
+ln -s /projects ~ubuntu/projects
+sudo chown ubuntu ~ubuntu/projects
+
+mkdir ~/tmp && \
+cd ~/tmp && \
+git clone https://github.com/aws/efs-utils && \
+cd efs-utils && \
+./build-deb.sh && \
+sudo apt-get --yes install ./build/amazon-efs-utils*deb
+
+sudo cat <<EOF3 >> /etc/fstab
+${fs}:/ /projects efs _netdev,noresvport,tls,accesspoint=${fsap} 0 0
+EOF3
+
+sudo mount -a
+
+echo "User data for dev server done"
