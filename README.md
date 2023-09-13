@@ -119,7 +119,7 @@ If `make check` target is successful, developer is good to commit the code to pr
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.10.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.16.2 |
 
 ## Modules
 
@@ -146,6 +146,7 @@ If `make check` target is successful, developer is good to commit the code to pr
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_ami_id"></a> [ami\_id](#input\_ami\_id) | Optional supply a specific AMI ID | `string` | `null` | no |
 | <a name="input_ami_instance_type"></a> [ami\_instance\_type](#input\_ami\_instance\_type) | instance type (ex: t2.micro) | `string` | `"t2.micro"` | no |
 | <a name="input_ami_names"></a> [ami\_names](#input\_ami\_names) | Name to filter for the ami | `list(string)` | <pre>[<br>  "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"<br>]</pre> | no |
 | <a name="input_ami_owners"></a> [ami\_owners](#input\_ami\_owners) | Owner to filter for the ami | `list(string)` | <pre>[<br>  "099720109477"<br>]</pre> | no |
@@ -164,6 +165,7 @@ If `make check` target is successful, developer is good to commit the code to pr
 | <a name="input_environment_number"></a> [environment\_number](#input\_environment\_number) | The environment count for the respective environment. Defaults to 000. Increments in value of 1 | `string` | `"000"` | no |
 | <a name="input_git_server_host"></a> [git\_server\_host](#input\_git\_server\_host) | name of the git server to put into the .netrc template | `string` | `"github.com"` | no |
 | <a name="input_iam_instance_profile_name"></a> [iam\_instance\_profile\_name](#input\_iam\_instance\_profile\_name) | IAM profile name to use for instances | `string` | `""` | no |
+| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN for the KMS key used for encryption | `string` | `null` | no |
 | <a name="input_naming_prefix"></a> [naming\_prefix](#input\_naming\_prefix) | Prefix for the provisioned resources. | `string` | `"devsrvr"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS Region in which the infra needs to be provisioned | `string` | `"us-east-2"` | no |
 | <a name="input_resource_names_map"></a> [resource\_names\_map](#input\_resource\_names\_map) | A map of key to resource\_name that will be used by tf-module-resource\_name to generate resource names | <pre>map(object(<br>    {<br>      name       = string<br>      max_length = optional(number, 60)<br>    }<br>  ))</pre> | <pre>{<br>  "ec2_instance": {<br>    "name": "devsrvr"<br>  },<br>  "ec2_sg": {<br>    "name": "devsg"<br>  },<br>  "efs_fs": {<br>    "name": "devefsfs"<br>  }<br>}</pre> | no |
