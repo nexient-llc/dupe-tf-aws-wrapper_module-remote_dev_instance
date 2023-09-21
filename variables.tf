@@ -10,6 +10,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+variable "ami_id" {
+  type        = string
+  description = "Optional supply a specific AMI ID"
+  default     = null
+}
 
 variable "ami_instance_type" {
   description = "instance type (ex: t2.micro)"
@@ -161,6 +166,12 @@ variable "iam_instance_profile_name" {
   type        = string
   description = "IAM profile name to use for instances"
   default     = ""
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "ARN for the KMS key used for encryption"
+  default     = null
 }
 
 variable "naming_prefix" {

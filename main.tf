@@ -10,6 +10,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+locals {
+  ami_filters = var.ami_id == null ? [
+    {
+      name   = "name"
+      values = coalesce(var.ami_names, ["*"])
+    },
+    {
+      name   = "virtualization-type"
+      values = coalesce(var.ami_virt_types, ["*"])
+    },
+    {
+      name   = "owner-id"
+      values = coalesce(var.ami_owners, [])
+    }
+    ] : [
+    {
+      name   = "image-id"
+      values = coalesce([var.ami_id], ["*"])
+    }
+  ]
+}
 
 data "aws_vpc" "vpc" {
   id = var.vpc_id
@@ -26,17 +47,13 @@ data "aws_subnet" "subnet" {
 data "aws_ami" "ami" {
   most_recent = true
 
-  filter {
-    name   = "name"
-    values = var.ami_names
+  dynamic "filter" {
+    for_each = local.ami_filters
+    content {
+      name   = filter.value.name
+      values = filter.value.values
+    }
   }
-
-  filter {
-    name   = "virtualization-type"
-    values = var.ami_virt_types
-  }
-
-  owners = var.ami_owners
 }
 
 data "aws_availability_zones" "available" {}
@@ -76,7 +93,7 @@ module "efs" {
   name           = module.resource_names["efs_fs"].standard
   creation_token = module.resource_names["efs_fs"].standard
   encrypted      = true
-  # kms_key_arn    = module.kms.key_arn
+  kms_key_arn    = var.kms_key_arn
 
   performance_mode = var.efs_performance_mode
   throughput_mode  = var.efs_throughput_mode
@@ -190,6 +207,10 @@ resource "aws_instance" "instance" {
 
   root_block_device {
     volume_size = var.root_volume_size
+  }
+
+  lifecycle {
+    ignore_changes = [ami]
   }
 
   tags = merge(local.tags, {
